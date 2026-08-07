@@ -1,0 +1,61 @@
+body {
+    margin: 0;
+    padding: 0;
+    width: 1920px;
+    height: 1080px;
+    background-color: #000000;
+    color: #ffffff;
+    font-family: sans-serif;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.safe-zone {
+    padding: 54px 96px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.header-text {
+    font-size: 32px;
+    margin-bottom: 40px;
+    color: #ffffff;
+}
+
+.grid-2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 40px;
+    flex-grow: 1;
+}
+
+.game-card {
+    background-color: #1a1a1a;
+    border: 6px solid transparent;
+    border-radius: 12px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.foco-activo {
+    border-color: #FFD700;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+    transform: scale(1.03);
+}
+
+.titulo-juego {
+    font-size: 80px;
+    margin: 0 0 15px 0;
+}
+
+.precio-juego {
+    font-size: 32px;
+    margin: 0;
+    color: #cccccc;
+}
