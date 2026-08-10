@@ -1,10 +1,10 @@
 # IndieHub - Ecosistema Multiplataforma (Evaluación 2)
 
-Este repositorio contiene la integración de 3 dispositivos (Smart TV, Smartphone y Wear OS) conectados en tiempo real mediante WebSockets y Supabase.
+Este repositorio contiene la integración de 3 dispositivos (Smart TV, Smartphone y Wear OS) conectados en tiempo real mediante WebSockets.
 
 ## Instrucciones de ejecución
 
-Para probar el ecosistema simultáneamente, sigue este orden estricto:
+Para probar el ecosistema simultáneamente:
 
 ### 1. Servidor Backend (Node.js)
 
