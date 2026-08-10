@@ -1,84 +1,69 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart';
+import '../ble_constants.dart';
 
-class WearProvider extends ChangeNotifier {
-  // Los datos locales que se mostrarán en la pantalla del reloj
-  int xp = 0;
-  double tiempo = 0.0;
-  int mensajes = 0;
+class WearProvider with ChangeNotifier {
+  bool _isGenerating = false;
+  Timer? _sensorTimer;
 
-  // Estado para controlar el botón de Play/Stop
-  bool isRunning = false;
+  // 3 tipos de datos generados según el caso de estudio (SA.1.A)[cite: 2, 4]
+  int _playtimeHours = 130;
+  int _unreadMessages = 0;
+  bool _loginRequestPending = false;
 
-  late IO.Socket socket;
-  Timer? _timer;
+  bool get isGenerating => _isGenerating;
+  int get playtimeHours => _playtimeHours;
+  int get unreadMessages => _unreadMessages;
+  bool get loginRequestPending => _loginRequestPending;
 
-  WearProvider() {
-    _initSocket();
-  }
-
-  void _initSocket() {
-    // Conexión al servidor local de Node.js a través del emulador
-    socket = IO.io('http://10.0.2.2:3001', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': true,
-    });
-
-    socket.onConnect((_) {
-      debugPrint('Reloj conectado exitosamente al ecosistema');
-    });
-  }
-
-  // Lógica del botón Iniciar/Detener exigida en la evaluación
-  void toggleSimulation() {
-    if (isRunning) {
-      stopSimulation();
+  void toggleDataGeneration() {
+    _isGenerating = !_isGenerating;
+    if (_isGenerating) {
+      _startSensors();
     } else {
-      startSimulation();
+      _stopSensors();
     }
+    notifyListeners();
   }
 
-  void startSimulation() {
-    isRunning = true;
-    notifyListeners();
+  void _startSensors() {
+    // Genera datos relevantes del ecosistema cada segundo (SA.1.A)[cite: 2]
+    _sensorTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
 
-    // Generamos datos cada cierto tiempo (ej. cada 2 segundos)
-    _timer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      // Incremento de estadísticas del jugador
-      xp += 14;
-      tiempo += 0.1;
+      // Fórmulas matemáticas idénticas al Teléfono para asegurar sincronización
+      _playtimeHours = 130 + (now.minute % 10);
+      _unreadMessages = (now.second % 4);
+      int mockDiscounts = (now.second % 3);
 
-      // Añadimos un mensaje nuevo cada cierto tiempo simulado
-      if (xp % 42 == 0) {
-        mensajes += 1;
-      }
+      // Simula una petición 2FA aleatoria en sincronía[cite: 4]
+      _loginRequestPending = (now.second % 15 == 0);
 
-      // Redondeamos a 1 decimal para evitar errores visuales en Flutter
-      tiempo = double.parse(tiempo.toStringAsFixed(1));
-
-      // EMISIÓN: Enviamos los datos generados al Backend
-      socket.emit('wearable_enviar_datos', {
-        'xp': xp,
-        'tiempo': tiempo,
-        'mensajes': mensajes,
-      });
-
-      notifyListeners(); // Actualiza la pantalla del reloj
+      _notifyGattCharacteristics(mockDiscounts);
+      notifyListeners();
     });
   }
 
-  void stopSimulation() {
-    isRunning = false;
-    _timer?.cancel();
-    notifyListeners();
+  void _stopSensors() {
+    _sensorTimer?.cancel();
   }
 
-  // Al cerrar la app, limpiamos el temporizador y el socket
+  // Simulación de exposición GATT con NOTIFY para cada tipo de dato (SA.1.A)[cite: 2]
+  void _notifyGattCharacteristics(int mockDiscounts) {
+    debugPrint(
+      "NOTIFY [Perfil]: $_playtimeHours hrs -> UUID: ${BleConstants.profileStatsUUID}",
+    );
+    debugPrint(
+      "NOTIFY [Comunidad]: $_unreadMessages msjs, $mockDiscounts desc -> UUID: ${BleConstants.communityAlertsUUID}",
+    );
+    debugPrint(
+      "NOTIFY [Seguridad 2FA]: $_loginRequestPending -> UUID: ${BleConstants.security2FAUUID}",
+    );
+  }
+
   @override
   void dispose() {
-    _timer?.cancel();
-    socket.dispose();
+    _stopSensors();
     super.dispose();
   }
 }

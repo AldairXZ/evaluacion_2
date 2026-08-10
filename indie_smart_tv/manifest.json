@@ -1,20 +1,20 @@
 {
   "name": "IndieHub TV",
   "short_name": "IndieHub",
+  "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",
-  "start_url": "./index.html",
-  "background_color": "#0d0d0d",
-  "theme_color": "#ff0055",
+  "theme_color": "#0f1722",
+  "background_color": "#0f1722",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "icons/Icon-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "icons/Icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
