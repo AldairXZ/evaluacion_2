@@ -3,20 +3,22 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class ActivityProvider with ChangeNotifier {
+  int _playtimeHours = 0;
+  int _achievements = 0;
   int _unreadCommunityMessages = 0;
   int _wishlistDiscounts = 0;
-  bool _pending2FALogin = false;
 
+  bool _pending2FALogin = false;
   String _connectionStatus = 'Desconectado';
   bool _isAlertTriggered = false;
 
-  // Nuevas variables para la simulación de escaneo BLE
   bool _isScanning = false;
   List<String> _scannedDevices = [];
 
-  Timer? _bleSimulationTimer;
   late IO.Socket _socket;
 
+  int get playtimeHours => _playtimeHours;
+  int get achievements => _achievements;
   int get unreadCommunityMessages => _unreadCommunityMessages;
   int get wishlistDiscounts => _wishlistDiscounts;
   bool get pending2FALogin => _pending2FALogin;
@@ -36,22 +38,39 @@ class ActivityProvider with ChangeNotifier {
         'token': 'indiehub-phone-client-token',
       }).build(),
     );
-    _socket.onConnect((_) => debugPrint('🔌 Conectado al WS de IndieHub'));
+
+    _socket.on('sync_wearable_data', (data) {
+      if (!_connectionStatus.contains('Conectado')) return;
+      _playtimeHours = data['horas'];
+      _achievements = data['logros'];
+      _unreadCommunityMessages = data['mensajes'];
+      _wishlistDiscounts = data['descuentos'];
+      notifyListeners();
+    });
+
+    _socket.on('2fa_request', (data) {
+      if (!_connectionStatus.contains('Conectado')) return;
+      _isAlertTriggered = true;
+      notifyListeners();
+    });
+
+    _socket.on('2fa_approved_success', (data) {
+      _isAlertTriggered = false;
+      notifyListeners();
+    });
   }
 
-  // --- Lógica de Escaneo y Conexión Simulada ---
+  void approve2FA() {
+    _socket.emit('2fa_approved', {});
+  }
+
   void startScanning() {
     _isScanning = true;
     _scannedDevices = [];
     notifyListeners();
 
-    // Simula 2 segundos de escaneo BLE buscando UUIDs
     Timer(const Duration(seconds: 2), () {
-      _scannedDevices = [
-        'IndieHub Watch X1',
-        'Wear OS Emulator 5556',
-        'Reloj de Stefano',
-      ];
+      _scannedDevices = ['IndieHub Watch X1', 'Wear OS Emulator 5556'];
       _isScanning = false;
       notifyListeners();
     });
@@ -59,57 +78,32 @@ class ActivityProvider with ChangeNotifier {
 
   void connectToDevice(String deviceName) {
     _connectionStatus = 'Conectando a $deviceName...';
-    _scannedDevices = []; // Limpiamos la lista al conectar
+    _scannedDevices = [];
     notifyListeners();
 
     Timer(const Duration(seconds: 2), () {
       _connectionStatus = 'Conectado a $deviceName';
       notifyListeners();
-      _startListeningNotifications();
     });
   }
 
   void disconnectWearable() {
-    _bleSimulationTimer?.cancel();
     _connectionStatus = 'Desconectado';
     _isAlertTriggered = false;
+    _playtimeHours = 0;
+    _achievements = 0;
     _unreadCommunityMessages = 0;
     _wishlistDiscounts = 0;
+    _pending2FALogin = false;
     notifyListeners();
   }
 
-  // --- Lógica de Sincronización ---
-  void _startListeningNotifications() {
-    _bleSimulationTimer?.cancel();
-    _bleSimulationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final now = DateTime.now();
-
-      _unreadCommunityMessages = (now.second % 4);
-      _wishlistDiscounts = (now.second % 3);
-      _pending2FALogin = (now.second % 15 == 0);
-
-      if (_pending2FALogin) {
-        _isAlertTriggered = true;
-        _socket.emit('wearable_alert', {
-          'mensaje': 'Verificación 2FA requerida en el reloj',
-          'tipo': 'seguridad',
-        });
-      } else {
-        _isAlertTriggered = false;
-      }
-      notifyListeners();
-    });
-  }
-
-  void realizarCompraRapida(String juego) {
-    _socket.emit('phone_action', {
-      'mensaje': '¡Has adquirido $juego desde tu Wishlist!',
-    });
+  void realizarCompraRapida(Map<String, dynamic> juego) {
+    _socket.emit('phone_purchase', juego);
   }
 
   @override
   void dispose() {
-    _bleSimulationTimer?.cancel();
     _socket.dispose();
     super.dispose();
   }

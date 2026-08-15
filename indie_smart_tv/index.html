@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>IndieHub TV</title>
-    <!-- CSP Obligatorio por rúbrica (SA.2.A) actualizado para permitir Socket.io -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3001 'unsafe-inline'; connect-src 'self' ws://localhost:3001 http://localhost:3001; media-src 'self' https:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' http://localhost:3001 'unsafe-inline' https://images.unsplash.com https://*; connect-src 'self' ws://localhost:3001 http://localhost:3001; media-src 'self' https:; img-src 'self' https: data:;">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Fallback visual (SA.2.C) -->
     <div id="media-background" class="media-background"></div>
     
     <div class="safe-zone">
         <header class="tv-header">
-            <!-- Información contextual requerida (SA.2.C) -->
             <h1>IndieHub</h1>
             <div id="datetime"></div>
         </header>
 
-        <!-- Grid 2x2 para el catálogo (SA.2.B) -->
-        <!-- ID corregido para que coincida exactamente con lo que busca tu app.js -->
-        <main id="grid-container" class="grid-container">
-            <!-- Las tarjetas se inyectarán aquí vía JS -->
+        <main class="main-layout">
+            <section class="horizontal-row">
+                <h2 class="row-title">Biblioteca (Recientes)</h2>
+                <div id="biblioteca-container" class="carousel-container"></div>
+            </section>
+            
+            <section class="horizontal-row">
+                <h2 class="row-title">Tienda (Novedades)</h2>
+                <div id="tienda-container" class="carousel-container"></div>
+            </section>
         </main>
+
+        <footer class="tv-footer">
+            <div class="button-prompt"><span class="button-icon">A</span> Seleccionar/Comprar</div>
+            <div class="button-prompt"><span class="button-icon D-pad-icon">✜</span> Navegar</div>
+        </footer>
     </div>
 
-    <!-- 1. Importación obligatoria del cliente Socket.io ANTES de tus scripts -->
     <script src="http://localhost:3001/socket.io/socket.io.js"></script>
-    
-    <!-- 2. Tus scripts locales -->
     <script src="js/app.js"></script>
     <script src="js/tv-navigation.js"></script>
 </body>

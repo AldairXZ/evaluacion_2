@@ -19,10 +19,9 @@ class IndieHubWearableApp extends StatelessWidget {
     return MaterialApp(
       title: 'IndieHub Wear',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor:
-            Colors.black, // Optimizado para pantallas de relojes
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: Colors.black,
+        colorScheme: const ColorScheme.dark(primary: Color(0xFFFBBF24)),
       ),
       home: const WearableScreen(),
     );
@@ -39,91 +38,138 @@ class WearableScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'IndieHub',
-                  style: TextStyle(
-                    color: Colors.amber,
-                    fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.symmetric(vertical: 35.0, horizontal: 20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'IndieHub',
+                style: TextStyle(
+                  color: Color(0xFFFBBF24),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildWearMetric(
+                    Icons.gamepad,
+                    '${wearProvider.playtimeHours}h',
+                    Colors.blueAccent,
                   ),
-                ),
-                const SizedBox(height: 10),
-
-                // Mostrar datos localmente en tiempo real (SA.1.A)[cite: 2]
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  _buildWearMetric(
+                    Icons.emoji_events,
+                    '${wearProvider.achievements}',
+                    Colors.amber,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildWearMetric(
+                    Icons.forum,
+                    '${wearProvider.unreadMessages}',
+                    Colors.greenAccent,
+                  ),
+                  _buildWearMetric(
+                    Icons.local_offer,
+                    '${wearProvider.wishlistDiscounts}',
+                    Colors.redAccent,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (wearProvider.loginRequestPending)
+                Column(
                   children: [
-                    const Icon(Icons.gamepad, size: 16, color: Colors.white54),
-                    const SizedBox(width: 5),
                     Text(
-                      '${wearProvider.playtimeHours} hrs jugadas',
-                      style: const TextStyle(fontSize: 14),
+                      wearProvider.juegoPendiente,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.forum, size: 16, color: Colors.blueAccent),
-                    const SizedBox(width: 5),
-                    Text(
-                      '${wearProvider.unreadMessages} msjs nuevos',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Alerta visual si hay petición 2FA[cite: 4]
-                if (wearProvider.loginRequestPending)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      '2FA REQUERIDO',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 5),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 15,
+                          vertical: 0,
+                        ),
+                        minimumSize: const Size(80, 30),
+                      ),
+                      onPressed: () => wearProvider.approve2FA(),
+                      child: const Text(
+                        'APROBAR',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              GestureDetector(
+                onTap: wearProvider.toggleDataGeneration,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: wearProvider.isGenerating
+                        ? Colors.redAccent.withOpacity(0.2)
+                        : Colors.greenAccent.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: wearProvider.isGenerating
+                          ? Colors.redAccent
+                          : Colors.greenAccent,
+                      width: 2,
+                    ),
                   ),
-
-                const SizedBox(height: 12),
-
-                // Botón Iniciar/Detener (SA.1.A)[cite: 2]
-                IconButton(
-                  iconSize: 36,
-                  color: wearProvider.isGenerating
-                      ? Colors.redAccent
-                      : Colors.greenAccent,
-                  icon: Icon(
+                  child: Icon(
                     wearProvider.isGenerating
-                        ? Icons.stop_circle
-                        : Icons.play_circle_fill,
+                        ? Icons.stop_rounded
+                        : Icons.play_arrow_rounded,
+                    color: wearProvider.isGenerating
+                        ? Colors.redAccent
+                        : Colors.greenAccent,
+                    size: 26,
                   ),
-                  onPressed: () => wearProvider.toggleDataGeneration(),
                 ),
-                Text(
-                  wearProvider.isGenerating
-                      ? 'Transmitiendo BLE'
-                      : 'Transmisión Pausada',
-                  style: const TextStyle(fontSize: 10, color: Colors.white70),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                wearProvider.isGenerating ? 'Transmitiendo' : 'Pausado',
+                style: const TextStyle(color: Colors.white54, fontSize: 10),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWearMetric(IconData icon, String value, Color color) {
+    return SizedBox(
+      width: 50,
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

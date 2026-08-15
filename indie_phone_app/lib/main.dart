@@ -42,7 +42,6 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  // Lista de las 3 pantallas de nuestra navegación
   final List<Widget> _screens = [
     const StoreTab(),
     const CommunitySecurityTab(),
@@ -81,11 +80,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
-// ==========================================
-// PESTAÑA 1: TIENDA
-// ==========================================
 class StoreTab extends StatelessWidget {
   const StoreTab({Key? key}) : super(key: key);
+
+  final List<Map<String, dynamic>> _juegosDiferentes = const [
+    {
+      "title": "Cuphead",
+      "developer": "Studio MDHR",
+      "price": "19.99",
+      "bg":
+          "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      "title": "Dead Cells",
+      "developer": "Motion Twin",
+      "price": "24.99",
+      "bg":
+          "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      "title": "Ori and the Blind Forest",
+      "developer": "Moon Studios",
+      "price": "19.99",
+      "bg":
+          "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      "title": "Slay the Spire",
+      "developer": "Mega Crit Games",
+      "price": "24.99",
+      "bg":
+          "https://images.unsplash.com/photo-1534423861386-85a16f5d13fd?auto=format&fit=crop&w=800&q=80",
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -101,56 +128,64 @@ class StoreTab extends StatelessWidget {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
+          Expanded(
+            child: ListView.builder(
+              itemCount: _juegosDiferentes.length,
+              itemBuilder: (context, index) {
+                final juego = _juegosDiferentes[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 15),
+                  padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  child: const Icon(
-                    Icons.videogame_asset,
-                    size: 30,
-                    color: Colors.white54,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        'Hollow Knight',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.black45,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.videogame_asset,
+                          size: 30,
+                          color: Colors.white54,
                         ),
                       ),
-                      Text(
-                        '\$15.00',
-                        style: TextStyle(color: Colors.greenAccent),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              juego['title'],
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '\$${juego['price']}',
+                              style: const TextStyle(color: Colors.greenAccent),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => provider.realizarCompraRapida(juego),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFBBF24),
+                          foregroundColor: Colors.black,
+                        ),
+                        child: const Text('Comprar'),
                       ),
                     ],
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: () =>
-                      provider.realizarCompraRapida("Hollow Knight"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFBBF24),
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text('Comprar'),
-                ),
-              ],
+                );
+              },
             ),
           ),
         ],
@@ -159,9 +194,6 @@ class StoreTab extends StatelessWidget {
   }
 }
 
-// ==========================================
-// PESTAÑA 2: COMUNIDAD Y SEGURIDAD
-// ==========================================
 class CommunitySecurityTab extends StatelessWidget {
   const CommunitySecurityTab({Key? key}) : super(key: key);
 
@@ -174,7 +206,6 @@ class CommunitySecurityTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Alerta 2FA
           if (provider.isAlertTriggered)
             Container(
               margin: const EdgeInsets.only(bottom: 20),
@@ -206,7 +237,7 @@ class CommunitySecurityTab extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () => provider.approve2FA(),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
@@ -226,7 +257,7 @@ class CommunitySecurityTab extends StatelessWidget {
             ),
 
           const Text(
-            'Resumen del Reloj',
+            'Sincronización IndieHub',
             style: TextStyle(fontSize: 18, color: Colors.white54),
           ),
           const SizedBox(height: 15),
@@ -237,16 +268,28 @@ class CommunitySecurityTab extends StatelessWidget {
               mainAxisSpacing: 15,
               children: [
                 _buildMetricCard(
+                  'Horas Jugadas',
+                  '${provider.playtimeHours}h',
+                  Icons.gamepad,
+                  Colors.blueAccent,
+                ),
+                _buildMetricCard(
+                  'Logros',
+                  '${provider.achievements}',
+                  Icons.emoji_events,
+                  Colors.amber,
+                ),
+                _buildMetricCard(
                   'Foro',
                   '${provider.unreadCommunityMessages} msjs',
                   Icons.forum,
-                  Colors.blueAccent,
+                  Colors.greenAccent,
                 ),
                 _buildMetricCard(
                   'Ofertas',
                   '${provider.wishlistDiscounts} items',
                   Icons.local_offer,
-                  Colors.greenAccent,
+                  Colors.redAccent,
                 ),
               ],
             ),
@@ -291,9 +334,6 @@ class CommunitySecurityTab extends StatelessWidget {
   }
 }
 
-// ==========================================
-// PESTAÑA 3: VINCULACIÓN (BLE MOCK)
-// ==========================================
 class PairingTab extends StatelessWidget {
   const PairingTab({Key? key}) : super(key: key);
 
@@ -375,7 +415,6 @@ class PairingTab extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Lista de dispositivos encontrados
           if (provider.scannedDevices.isNotEmpty) ...[
             const Text(
               'Dispositivos Encontrados:',

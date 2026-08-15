@@ -1,91 +1,143 @@
-// Simulación de datos de la API del catálogo IndieHub (mínimo 3 campos)
-const mockJuegos = [
-    { id: 0, titulo: "Hollow Knight", dev: "Team Cherry", precio: "$15.00", bg: "https://ejemplo.com/hollow.jpg" },
-    { id: 1, titulo: "Celeste", dev: "Maddy Makes Games", precio: "$19.99", bg: "https://ejemplo.com/celeste.jpg" },
-    { id: 2, titulo: "Hades", dev: "Supergiant Games", precio: "$24.99", bg: "https://ejemplo.com/hades.jpg" },
-    { id: 3, titulo: "Stardew Valley", dev: "ConcernedApe", precio: "$14.99", bg: "https://ejemplo.com/stardew.jpg" }
-];
+let juegosAPI = [];
+let juegosBiblioteca = [];
 
-let indiceActual = 0; // Empezamos en la primera tarjeta (arriba a la izquierda)
-const columnas = 2;
-const filas = 2;
+let filaActual = 1; 
+let indiceTienda = 0;
+let indiceBiblioteca = 0;
+let juegoPendiente = null;
 
-function renderizarGrid() {
-    const grid = document.getElementById('game-grid');
-    grid.innerHTML = ''; // Limpiar el grid
+async function cargarDatosAPI() {
+    try {
+        const response = await fetch('http://localhost:3001/api/juegos');
+        juegosAPI = await response.json();
+        renderizarListas();
+        actualizarFondo();
+    } catch (error) {
+        document.getElementById('tienda-container').innerHTML = '<p class="main-data">Offline</p>';
+    }
+}
 
-    mockJuegos.forEach((juego, index) => {
-        // Creamos la tarjeta del juego
-        const card = document.createElement('div');
-        card.className = 'game-card';
-        card.id = `card-${index}`;
-        card.tabIndex = -1; // Permite que reciba el foco programáticamente
+function renderizarListas() {
+    const gridBiblio = document.getElementById('biblioteca-container');
+    gridBiblio.innerHTML = '';
+    if (juegosBiblioteca.length === 0) {
+        gridBiblio.innerHTML = '<p style="color: #666; font-size: 2rem; margin-left: 10px;">Aún no tienes juegos recientes.</p>';
+    } else {
+        juegosBiblioteca.forEach((juego, index) => {
+            gridBiblio.appendChild(crearTarjetaDOM(juego, `biblio-${index}`, false));
+        });
+    }
 
-        // Inyectamos los 3 datos requeridos (SA.2.C)
-        card.innerHTML = `
-            <p class="main-data">${juego.titulo}</p>
-            <p class="secondary-data">${juego.dev}</p>
-            <p class="detail-data">${juego.precio}</p>
-        `;
-        grid.appendChild(card);
+    const gridTienda = document.getElementById('tienda-container');
+    gridTienda.innerHTML = ''; 
+    juegosAPI.forEach((juego, index) => {
+        gridTienda.appendChild(crearTarjetaDOM(juego, `tienda-${index}`, true));
     });
 
     actualizarFoco();
+}
+
+function crearTarjetaDOM(juego, id, esTienda) {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.id = id;
+    
+    const etiquetaSecundaria = esTienda 
+        ? `<p class="detail-data">$${juego.price}</p>` 
+        : `<p class="biblio-label">ADQUIRIDO</p>`;
+
+    // Estructura HTML actualizada para el agrupador secundario (evita empalmes)
+    card.innerHTML = `
+        <div class="card-image" style="background-image: url('${juego.bg}')"></div>
+        <div class="card-content">
+            <p class="main-data" title="${juego.title}">${juego.title}</p>
+            <div class="secondary-wrapper">
+                <p class="secondary-data">${juego.developer || 'IndieHub'}</p>
+                ${etiquetaSecundaria}
+            </div>
+        </div>
+    `;
+    return card;
 }
 
 function actualizarFoco() {
-    // Removemos la clase activa de todas las tarjetas
-    document.querySelectorAll('.game-card').forEach(card => {
-        card.classList.remove('active');
-    });
-
-    // Añadimos el resplandor dorado a la tarjeta actual (SA.2.B)
-    const tarjetaActiva = document.getElementById(`card-${indiceActual}`);
+    document.querySelectorAll('.game-card').forEach(card => card.classList.remove('active'));
+    
+    let targetId = filaActual === 0 ? `biblio-${indiceBiblioteca}` : `tienda-${indiceTienda}`;
+    const tarjetaActiva = document.getElementById(targetId);
+    
     if (tarjetaActiva) {
         tarjetaActiva.classList.add('active');
-        tarjetaActiva.focus();
+        // Asegura que la tarjeta enfocada siempre esté visible en pantalla sin usar scrollbars
+        tarjetaActiva.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
 }
 
-// Actualiza el fondo cuando se presiona Enter/OK (SA.2.C)
 function actualizarFondo() {
     const background = document.getElementById('media-background');
-    const juegoSeleccionado = mockJuegos[indiceActual];
-    
-    // Fallback visual por si el recurso falla (SA.2.C)
-    background.style.backgroundColor = '#1e293b'; 
-    background.style.backgroundImage = `url('${juegoSeleccionado.bg}')`;
+    const lista = filaActual === 0 ? juegosBiblioteca : juegosAPI;
+    const idx = filaActual === 0 ? indiceBiblioteca : indiceTienda;
+
+    if (lista.length > 0 && lista[idx]) {
+        background.style.backgroundImage = `url('${lista[idx].bg}')`;
+    }
 }
 
-// Captura de eventos del teclado/D-pad (SA.2.C)
+if (window.socket) {
+    window.socket.on('2fa_approved_success', () => {
+        if (juegoPendiente) {
+            if (!juegosBiblioteca.some(j => j.title === juegoPendiente.title)) {
+                juegosBiblioteca.push(juegoPendiente);
+                renderizarListas();
+            }
+            juegoPendiente = null;
+        }
+    });
+
+    window.socket.on('juego_comprado', (juego) => {
+        if (!juegosBiblioteca.some(j => j.title === juego.title)) {
+            juegosBiblioteca.push(juego);
+            renderizarListas();
+        }
+    });
+}
+
 window.addEventListener('keydown', (e) => {
+    if (juegosAPI.length === 0) return;
+    
     switch (e.key) {
         case 'ArrowRight':
-            if ((indiceActual + 1) % columnas !== 0) indiceActual++;
+            if (filaActual === 0 && indiceBiblioteca < juegosBiblioteca.length - 1) indiceBiblioteca++;
+            if (filaActual === 1 && indiceTienda < juegosAPI.length - 1) indiceTienda++;
             break;
         case 'ArrowLeft':
-            if (indiceActual % columnas !== 0) indiceActual--;
+            if (filaActual === 0 && indiceBiblioteca > 0) indiceBiblioteca--;
+            if (filaActual === 1 && indiceTienda > 0) indiceTienda--;
             break;
         case 'ArrowDown':
-            if (indiceActual + columnas < mockJuegos.length) indiceActual += columnas;
+            if (filaActual === 0 && juegosAPI.length > 0) filaActual = 1;
             break;
         case 'ArrowUp':
-            if (indiceActual - columnas >= 0) indiceActual -= columnas;
+            if (filaActual === 1 && juegosBiblioteca.length > 0) {
+                filaActual = 0;
+                if (indiceBiblioteca >= juegosBiblioteca.length) indiceBiblioteca = juegosBiblioteca.length - 1;
+            }
             break;
         case 'Enter':
-            actualizarFondo();
+            if (filaActual === 1 && window.socket && juegosAPI.length > 0) {
+                juegoPendiente = juegosAPI[indiceTienda];
+                window.socket.emit('tv_purchase_attempt', { juego: juegoPendiente.title });
+            }
             break;
     }
+    actualizarFondo();
     actualizarFoco();
 });
 
-// Mostrar hora contextual en el header (SA.2.C)
 setInterval(() => {
     document.getElementById('datetime').innerText = new Date().toLocaleTimeString();
 }, 1000);
 
-// Inicializar la app
 window.onload = () => {
-    renderizarGrid();
-    actualizarFondo(); // Cargar el fondo del primer elemento por defecto
+    cargarDatosAPI(); 
 };

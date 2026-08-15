@@ -1,85 +1,201 @@
-/* Variables de diseño oscuro y alto contraste de IndieHub */
-:root {
-    --bg-color: #0f1722;
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --accent-glow: #fbbf24; /* Resplandor dorado para el foco del D-pad */
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+body {
+    background-color: #1a1f24;
+    color: #ffffff;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
 }
 
-/* Bloqueo a 1920x1080 sin scroll (SA.2.B) */
-body, html {
-    margin: 0;
-    padding: 0;
-    width: 1920px;
-    height: 1080px;
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden; 
+.media-background {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.25;
+    z-index: -1;
+    transition: background-image 0.5s ease-in-out;
+    filter: blur(15px);
 }
 
-/* Safe zone del 5% activa (SA.2.B) */
 .safe-zone {
-    position: relative;
-    width: 1728px; /* 1920 - (96 * 2) */
-    height: 972px; /* 1080 - (54 * 2) */
-    margin: 54px 96px;
+    padding: 54px 96px; 
     display: flex;
     flex-direction: column;
-    z-index: 10;
+    height: 100%;
+    overflow: hidden;
 }
 
 .tv-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 40px;
+    margin-bottom: 10px; 
+    flex-shrink: 0;
 }
 
-/* Grid de 2x2 (SA.2.B) */
-.grid-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 40px;
-    flex-grow: 1;
+.tv-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
 }
 
-/* Tipografía de 5rem requerida (SA.2.B) */
-.game-card .main-data {
-    font-size: 5rem; 
+#datetime { 
+    font-size: 1.2rem; 
+    color: #a3a3a3; 
+    font-weight: 500; 
+}
+
+.main-layout { 
+    display: flex; 
+    flex-direction: column;
+    gap: 15px; 
+    flex: 1; 
+    overflow: hidden; 
+}
+
+.horizontal-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.row-title { 
+    font-size: 2.2rem; 
+    color: #f6f7f8; 
+    margin-bottom: 5px; 
     font-weight: bold;
-    margin: 0;
 }
 
-.game-card .secondary-data {
-    font-size: 2rem;
-    color: var(--text-secondary);
+.carousel-container { 
+    display: flex; 
+    gap: 30px; 
+    overflow: hidden; 
+    padding: 15px 10px; 
+    width: 100%;
 }
 
-.game-card .detail-data {
-    font-size: 1.5rem;
-    color: var(--text-secondary);
+.game-card {
+    width: 480px; 
+    height: 280px; 
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), border-color 0.3s;
+    border: 4px solid transparent;
+    background-color: #2a3138;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    flex-shrink: 0;
 }
 
-/* Foco visible del D-pad con borde/glow dorado (SA.2.B) */
-.game-card:focus, .game-card.active {
-    outline: none;
-    border: 4px solid var(--accent-glow);
-    box-shadow: 0 0 20px var(--accent-glow);
-    transform: scale(1.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-/* Fondo multimedia (SA.2.C) */
-.media-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1920px;
-    height: 1080px;
-    z-index: 1;
+.card-image {
+    width: 100%;
+    height: 100%;
     background-size: cover;
     background-position: center;
-    opacity: 0.3; /* Oscurecido para alto contraste de texto */
+    transition: transform 0.3s ease;
+}
+
+.card-content {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.8) 60%, transparent 100%);
+    transform: translateY(100%); 
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.game-card.active {
+    transform: scale(1.08); 
+    border-color: #f6f7f8; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+    z-index: 10;
+}
+
+.game-card.active .card-image { 
+    transform: scale(1.05); 
+}
+
+.game-card.active .card-content { 
+    transform: translateY(0); 
+}
+
+.main-data { 
+    font-size: 5rem; 
+    font-weight: bold; 
+    margin-bottom: 8px; 
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.9); 
+    line-height: 1;
+    white-space: nowrap; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.secondary-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.secondary-data { 
+    font-size: 2rem; 
+    color: #1cb992; 
+    text-transform: uppercase; 
+    font-weight: 700; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%; 
+}
+
+.detail-data { 
+    font-size: 2rem; 
+    color: #ebb300; 
+    font-weight: bold;
+}
+
+.biblio-label {
+    font-size: 2rem; 
+    color: #4CAF50; 
+    font-weight: bold;
+}
+
+.tv-footer {
+    margin-top: auto;
+    display: flex;
+    gap: 30px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+
+.button-prompt { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+    font-size: 1.1rem; 
+    font-weight: 600; 
+    color: #c4c4c4; 
+}
+
+.button-icon { 
+    background-color: #ffffff; 
+    color: #000; 
+    border-radius: 50%; 
+    width: 28px; 
+    height: 28px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    font-size: 1rem; 
+    font-weight: bold; 
+}
+
+.D-pad-icon { 
+    background-color: transparent; 
+    color: #fff; 
+    font-size: 1.5rem; 
 }
